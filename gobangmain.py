@@ -16,7 +16,9 @@ class GoBang(QWidget):
     def __init__(self):
         super().__init__()
         self.board = ChessBoard()
+
         self.mousepoint = QPoint()
+        self.clickpoint=QPoint()
         self.status = True
 
         self.UI()
@@ -25,9 +27,9 @@ class GoBang(QWidget):
         self.resize(WIDTH, HEIGHT)
         self.setWindowTitle('五子棋')
         self.setWindowIcon(QIcon('img/icon.jpg'))
-
         self.width = self.geometry().width()
         self.height = self.geometry().height()
+
         self.reference_side = self.height if self.height / 800 * 1200 > self.width else self.width
 
     def drawframe(self, event, painter):
@@ -50,21 +52,20 @@ class GoBang(QWidget):
     def drawboard(self, event, painter):
         pen = QPen(Qt.black, 1, Qt.SolidLine)
         painter.setPen(pen)
-
         self.__board = [[((180 + r * UNIT) / WIDTH * self.width, (130 + c * UNIT) / HEIGHT * self.height) for r in range(15)] for c in range(15)]
-
         for item in range(15):
             painter.drawLine(self.__board[item][0][0], self.__board[item][0][1], self.__board[item][-1][0], self.__board[item][-1][1])
             painter.drawLine(self.__board[0][item][0], self.__board[0][item][1], self.__board[-1][item][0], self.__board[-1][item][1])
 
     def paintEvent(self, event):
+        self.width = self.geometry().width()
+        self.height = self.geometry().height()
         painter = QPainter()
         painter.begin(self)
         self.drawframe(event, painter)
         self.drawboard(event, painter)
-
         self.drawhoverframe(event, painter)
-
+        self.drawpieces(event,painter)
         painter.end()
 
     def enterEvent(self, event):
@@ -77,23 +78,40 @@ class GoBang(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
-        pass
+        self.clickpoint=event.pos()
+        self.update()
 
     def mouseReleaseEvent(self, event):
         pass
 
+    def point2index(self):
+        return (self.mousepoint.y() * HEIGHT / self.height - 111) / UNIT, (self.mousepoint.x() * WIDTH / self.width - 161) / UNIT
+
+    def click2index(self):
+        return (self.clickpoint.y() * HEIGHT / self.height - 111) / UNIT, (self.clickpoint.x() * WIDTH / self.width - 161) / UNIT
+
     def drawhoverframe(self, event, painter):
-        pos_x, pos_y = (self.mousepoint.y() * HEIGHT / self.height - 111) / UNIT,(self.mousepoint.x() * WIDTH / self.width - 161) / UNIT
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
-        pen = QPen(Qt.red, 2, Qt.SolidLine)
-        pen.setDashPattern([UNIT / 8, UNIT / 4])
-        painter.setPen(pen)
+        pen = QPen(Qt.red, 2, Qt.DashLine)
+        pos_x, pos_y = self.point2index()
         if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
             pos_x, pos_y = int(pos_x), int(pos_y)
+            pen.setDashPattern([UNIT * WIDTH / 8 / self.width, UNIT * WIDTH / 4 / self.width])
+            painter.setPen(pen)
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1])
+            painter.drawLine(self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
+            pen.setDashPattern([UNIT * HEIGHT / 8 / self.height, UNIT * HEIGHT / 4 / self.height])
+            painter.setPen(pen)
             painter.drawLine(self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
-            painter.drawLine(self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
+
+    def drawpieces(self, event, painter,status=0):
+        painter.setBrush(Qt.black)
+        self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
+        pos_x, pos_y = self.click2index()
+        if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
+            pos_x, pos_y = int(pos_x), int(pos_y)
+            painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],UNIT*WIDTH/self.width,UNIT*HEIGHT/self.height,0,360*16)
 
 
 if __name__ == '__main__':
