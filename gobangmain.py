@@ -15,7 +15,10 @@ from PyQt5.QtCore import Qt, QPoint
 class GoBang(QWidget):
     def __init__(self):
         super().__init__()
-        self.board=ChessBoard()
+        self.board = ChessBoard()
+        self.mousepoint = QPoint()
+        self.status = True
+
         self.UI()
 
     def UI(self):
@@ -23,21 +26,11 @@ class GoBang(QWidget):
         self.setWindowTitle('五子棋')
         self.setWindowIcon(QIcon('img/icon.jpg'))
 
-    def relativepoint(self, point):
-        pass
-
-    def paintEvent(self, event):
         self.width = self.geometry().width()
         self.height = self.geometry().height()
         self.reference_side = self.height if self.height / 800 * 1200 > self.width else self.width
 
-        ###############################画边框###########################################
-        painter = QPainter()
-        painter.begin(self)
-
-        # pen = QPen(Qt.black, 3, Qt.SolidLine)
-        # painter.setPen(pen)
-        # point=[(294,244),(606,244),(294,556),(606,556),(450,400)]
+    def drawframe(self, event, painter):
         rect = (150 / WIDTH * self.width, 100 / HEIGHT * self.height, 600 / WIDTH * self.width, 600 / HEIGHT * self.height)
 
         rect1 = (294 / WIDTH * self.width, 244 / HEIGHT * self.height, 6 / WIDTH * self.width, 6 / HEIGHT * self.height)
@@ -45,7 +38,6 @@ class GoBang(QWidget):
         rect3 = (294 / WIDTH * self.width, 556 / HEIGHT * self.height, 6 / WIDTH * self.width, 6 / HEIGHT * self.height)
         rect4 = (606 / WIDTH * self.width, 556 / HEIGHT * self.height, 6 / WIDTH * self.width, 6 / HEIGHT * self.height)
         rect5 = (450 / WIDTH * self.width, 400 / HEIGHT * self.height, 6 / WIDTH * self.width, 6 / HEIGHT * self.height)
-
         painter.setBrush(QColor('#FFE4AF'))
         painter.drawRect(rect[0], rect[1], rect[2], rect[3])
         painter.setBrush(Qt.black)
@@ -54,15 +46,8 @@ class GoBang(QWidget):
         painter.drawRect(rect3[0], rect3[1], rect3[2], rect3[3])
         painter.drawRect(rect4[0], rect4[1], rect4[2], rect4[3])
         painter.drawRect(rect5[0], rect5[1], rect5[2], rect5[3])
-        #
-        # LeftTop = QPoint(rect[0], rect[1])
-        # RightTop = QPoint(rect[2], rect[1])
-        # LeftBottom = QPoint(rect[0], rect[3])
-        # RightBottom = QPoint(rect[2], rect[3])
-        #
-        # polygon = QPolygon([LeftTop, RightTop, RightBottom, LeftBottom])
-        # painter.drawPolygon(polygon)
-        ##############################画棋盘############################################
+
+    def drawboard(self, event, painter):
         pen = QPen(Qt.black, 1, Qt.SolidLine)
         painter.setPen(pen)
 
@@ -71,44 +56,44 @@ class GoBang(QWidget):
         for item in range(15):
             painter.drawLine(self.__board[item][0][0], self.__board[item][0][1], self.__board[item][-1][0], self.__board[item][-1][1])
             painter.drawLine(self.__board[0][item][0], self.__board[0][item][1], self.__board[-1][item][0], self.__board[-1][item][1])
-        ##############################画网格############################################
-        self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
 
+    def paintEvent(self, event):
+        painter = QPainter()
+        painter.begin(self)
+        self.drawframe(event, painter)
+        self.drawboard(event, painter)
 
-
-        # if self.__grid[0][0][0] < self.position[0] and self.position[0] < self.__grid[-1][-1][0] and self.__grid[0][0][1] < self.position[1] and self.position[1] < self.__grid[-1][-1][1]:
-        #     pass
-
-        # for item in range(16):
-        #     painter.drawLine(self.__grid[item][0][0], self.__grid[item][0][1], self.__grid[item][-1][0], self.__grid[item][-1][1])
-        #     painter.drawLine(self.__grid[0][item][0], self.__grid[0][item][1], self.__grid[-1][item][0], self.__grid[-1][item][1])
+        self.drawhoverframe(event, painter)
 
         painter.end()
 
+    def enterEvent(self, event):
+        self.setMouseTracking(True)
+        self.mousepoint = event.pos()
+
     def mouseMoveEvent(self, event):
         self.setMouseTracking(True)
-        self.position = event.x(), event.y()
+        self.mousepoint = event.pos()
+        self.update()
 
-        pos_x,pos_y=(self.position[0]*WIDTH/self.width-161)/UNIT,(self.position[1]*HEIGHT/self.height-111)/UNIT
-        print(pos_x,pos_y)
-        if 0<pos_x and pos_x<15 and 0<pos_y and pos_y<15:
-            self.pos_x,self.pos_y=int(round(pos_x)),int(round(pos_y))
+    def mousePressEvent(self, event):
+        pass
 
-    # def paintEvent(self,event):
-    #     painter = QPainter()
-    #     painter.begin(self)
-    #
-    #     pen = QPen(Qt.red, 2, Qt.SolidLine)
-    #     pen.setStyle(Qt.CustomDashLine)
-    #     pen.setDashPattern([5,2])
-    #     painter.setPen(pen)
-    #     print('self:',self.pos_x,self.pos_y)
-    #     painter.drawLine(self.__grid[self.pos_x][self.pos_y][0], self.__grid[self.pos_x][self.pos_y][1], self.__grid[self.pos_x + 1][self.pos_y + 1][0], self.__grid[self.pos_x + 1][self.pos_y + 1][1])
+    def mouseReleaseEvent(self, event):
+        pass
 
-
-        # painter.end()
-
-
+    def drawhoverframe(self, event, painter):
+        pos_x, pos_y = (self.mousepoint.y() * HEIGHT / self.height - 111) / UNIT,(self.mousepoint.x() * WIDTH / self.width - 161) / UNIT
+        self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
+        pen = QPen(Qt.red, 2, Qt.SolidLine)
+        pen.setDashPattern([UNIT / 8, UNIT / 4])
+        painter.setPen(pen)
+        if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
+            pos_x, pos_y = int(pos_x), int(pos_y)
+            painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1])
+            painter.drawLine(self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
+            painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
+            painter.drawLine(self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
 
 
 if __name__ == '__main__':
@@ -116,3 +101,5 @@ if __name__ == '__main__':
     gb = GoBang()
     gb.show()
     sys.exit(app.exec_())
+
+# xxzjwky/chess
