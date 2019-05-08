@@ -20,6 +20,7 @@ class GoBang(QWidget):
         self.mousepoint = QPoint()
         self.clickpoint=QPoint()
         self.status = True
+        self.pieces = []
 
         self.UI()
 
@@ -106,12 +107,15 @@ class GoBang(QWidget):
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
 
     def drawpieces(self, event, painter,status=0):
+
         painter.setBrush(Qt.black)
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
         pos_x, pos_y = self.click2index()
         if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
             pos_x, pos_y = int(pos_x), int(pos_y)
-            painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],UNIT*WIDTH/self.width,UNIT*HEIGHT/self.height,0,360*16)
+            self.pieces.append((pos_x,pos_y))
+            for pos_x,pos_y in self.pieces:
+                painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],UNIT*WIDTH/self.width,UNIT*HEIGHT/self.height,0,360*16)
 
 
 if __name__ == '__main__':
