@@ -66,6 +66,7 @@ class GoBang(QWidget):
         self.drawframe(event, painter)
         self.drawboard(event, painter)
         self.drawhoverframe(event, painter)
+        painter.setPen(QPen(Qt.black))
         self.drawpieces(event,painter)
         painter.end()
 
@@ -93,7 +94,7 @@ class GoBang(QWidget):
 
     def drawhoverframe(self, event, painter):
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
-        pen = QPen(Qt.red, 2, Qt.DashLine)
+        pen = QPen(Qt.red, 2, Qt.SolidLine)
         pos_x, pos_y = self.point2index()
         if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
             pos_x, pos_y = int(pos_x), int(pos_y)
@@ -106,16 +107,19 @@ class GoBang(QWidget):
             painter.drawLine(self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
 
-    def drawpieces(self, event, painter,status=0):
+
+    def drawpieces(self, event, painter,status=True):
 
         painter.setBrush(Qt.black)
-        self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
+        self.__grid = [[((164 + r * UNIT) / WIDTH * self.width, (114 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
         pos_x, pos_y = self.click2index()
         if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
             pos_x, pos_y = int(pos_x), int(pos_y)
             self.pieces.append((pos_x,pos_y))
-            for pos_x,pos_y in self.pieces:
-                painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],UNIT*WIDTH/self.width,UNIT*HEIGHT/self.height,0,360*16)
+        for pos_x,pos_y in self.pieces:
+            if status:
+                painter.setPen(QPen(Qt.black))
+            painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],(UNIT-6)*WIDTH/self.width,(UNIT-6)*HEIGHT/self.height,0,360*16)
 
 
 if __name__ == '__main__':
