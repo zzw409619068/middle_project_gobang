@@ -20,8 +20,8 @@ class GoBang(QWidget):
         self.mousepoint = QPoint()
         self.clickpoint = QPoint()
         self.status = True
-        self.mousetracking = True
-        self.__pieces = [[(x, y, EMPTY) for x in range(15)] for y in range(15)]
+
+        self.__pieces =[[EMPTY for _ in range(GEOMETRY[0])] for _ in range(GEOMETRY[1])]
         self.piecedownactivate = True
 
         self.UI()
@@ -94,43 +94,45 @@ class GoBang(QWidget):
         self.update()
 
     def point2index(self):
-        return int((self.mousepoint.y() * HEIGHT / self.height - 111)/ UNIT), int((self.mousepoint.x() * WIDTH / self.width - 161) / UNIT)
+        return int((self.mousepoint.y() * HEIGHT / self.height - 111) / UNIT), int((self.mousepoint.x() *WIDTH /self.width - 161) / UNIT)
 
     def click2index(self):
-        return int((self.clickpoint.y() * HEIGHT / self.height - 111) / UNIT), int((self.clickpoint.x() * WIDTH / self.width - 161) / UNIT)
+        return int((self.clickpoint.y() * HEIGHT /self.height - 111) / UNIT), int((self.clickpoint.x() * WIDTH /self.width - 161) / UNIT)
 
     def changestatus(self, status):
         return BLACK if status else WHITE
 
     def updatepieces(self):
         pos_x, pos_y = self.click2index()
-        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y][2] and self.piecedownactivate:
-            self.__pieces[pos_x][pos_y] = (pos_x, pos_y, self.changestatus(self.status))
+        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y] and self.piecedownactivate:
+            self.__pieces[pos_x][pos_y] = (self.changestatus(self.status))
             self.status = not self.status
+            if self.board.wincondition(pos_x,pos_y,self.__pieces):
+                print(self.__pieces[pos_x][pos_y], '胜')
 
     def drawhoverframe(self, painter):
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
         pen = QPen(Qt.red, 2, Qt.DashLine)
         pos_x, pos_y = self.point2index()
-        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y][2]:
-            pen.setDashPattern([UNIT * WIDTH / 8 / self.width, UNIT * WIDTH / 4 / self.width])
+        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y]:
+            pen.setDashPattern([UNIT * self.width / WIDTH / 8, UNIT * self.width / WIDTH / 4])
             painter.setPen(pen)
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1])
             painter.drawLine(self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
-            pen.setDashPattern([UNIT * HEIGHT / 8 / self.height, UNIT * HEIGHT / 4 / self.height])
+            pen.setDashPattern([UNIT * self.height / HEIGHT / 8, UNIT * self.height / HEIGHT / 4])
             painter.setPen(pen)
             painter.drawLine(self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
 
     def drawpieces(self, painter):
         self.__grid = [[((164 + r * UNIT) / WIDTH * self.width, (114 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
-        for item in self.__pieces:
-            for pos_x, pos_y, status in item:
-                if status:
-                    color = Qt.black if status == BLACK else Qt.white
+        for pos_x in range(len(self.__pieces)):
+            for pos_y in range(len(self.__pieces[pos_x])):
+                if self.__pieces[pos_x][pos_y]:
+                    color = Qt.black if self.__pieces[pos_x][pos_y] == BLACK else Qt.white
                     painter.setPen(QPen(color))
                     painter.setBrush(color)
-                    painter.drawChord(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], (UNIT - 6) * WIDTH / self.width, (UNIT - 6) * HEIGHT / self.height, 0, 360 * 16)
+                    painter.drawChord(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], (UNIT - 6) / WIDTH * self.width, (UNIT - 6) / HEIGHT * self.height, 0, 360 * 16)
 
 
 if __name__ == '__main__':
