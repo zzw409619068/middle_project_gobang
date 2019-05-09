@@ -18,9 +18,11 @@ class GoBang(QWidget):
         self.board = ChessBoard()
 
         self.mousepoint = QPoint()
-        self.clickpoint=QPoint()
+        self.clickpoint = QPoint()
         self.status = True
-        self.pieces = []
+        self.mousetracking = True
+        self.__pieces = [[(x, y, EMPTY) for x in range(15)] for y in range(15)]
+        self.piecedownactivate = True
 
         self.UI()
 
@@ -33,7 +35,7 @@ class GoBang(QWidget):
 
         self.reference_side = self.height if self.height / 800 * 1200 > self.width else self.width
 
-    def drawframe(self, event, painter):
+    def drawframe(self, painter):
         rect = (150 / WIDTH * self.width, 100 / HEIGHT * self.height, 600 / WIDTH * self.width, 600 / HEIGHT * self.height)
 
         rect1 = (294 / WIDTH * self.width, 244 / HEIGHT * self.height, 6 / WIDTH * self.width, 6 / HEIGHT * self.height)
@@ -50,7 +52,7 @@ class GoBang(QWidget):
         painter.drawRect(rect4[0], rect4[1], rect4[2], rect4[3])
         painter.drawRect(rect5[0], rect5[1], rect5[2], rect5[3])
 
-    def drawboard(self, event, painter):
+    def drawboard(self, painter):
         pen = QPen(Qt.black, 1, Qt.SolidLine)
         painter.setPen(pen)
         self.__board = [[((180 + r * UNIT) / WIDTH * self.width, (130 + c * UNIT) / HEIGHT * self.height) for r in range(15)] for c in range(15)]
@@ -63,10 +65,13 @@ class GoBang(QWidget):
         self.height = self.geometry().height()
         painter = QPainter()
         painter.begin(self)
-        self.drawframe(event, painter)
-        self.drawboard(event, painter)
-        self.drawhoverframe(event, painter)
-        self.drawpieces(event,painter)
+        self.drawframe(painter)
+        self.drawboard(painter)
+
+        self.drawhoverframe(painter)
+
+        self.drawpieces(painter)
+
         painter.end()
 
     def enterEvent(self, event):
@@ -79,24 +84,35 @@ class GoBang(QWidget):
         self.update()
 
     def mousePressEvent(self, event):
-        self.clickpoint=event.pos()
-        self.update()
+        if event.button() == Qt.LeftButton:
+            self.clickpoint = event.pos()
+            self.updatepieces()
+
+            self.update()
 
     def mouseReleaseEvent(self, event):
-        pass
+        self.update()
 
     def point2index(self):
-        return (self.mousepoint.y() * HEIGHT / self.height - 111) / UNIT, (self.mousepoint.x() * WIDTH / self.width - 161) / UNIT
+        return int((self.mousepoint.y() * HEIGHT / self.height - 111)/ UNIT), int((self.mousepoint.x() * WIDTH / self.width - 161) / UNIT)
 
     def click2index(self):
-        return (self.clickpoint.y() * HEIGHT / self.height - 111) / UNIT, (self.clickpoint.x() * WIDTH / self.width - 161) / UNIT
+        return int((self.clickpoint.y() * HEIGHT / self.height - 111) / UNIT), int((self.clickpoint.x() * WIDTH / self.width - 161) / UNIT)
 
-    def drawhoverframe(self, event, painter):
+    def changestatus(self, status):
+        return BLACK if status else WHITE
+
+    def updatepieces(self):
+        pos_x, pos_y = self.click2index()
+        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y][2] and self.piecedownactivate:
+            self.__pieces[pos_x][pos_y] = (pos_x, pos_y, self.changestatus(self.status))
+            self.status = not self.status
+
+    def drawhoverframe(self, painter):
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
         pen = QPen(Qt.red, 2, Qt.DashLine)
         pos_x, pos_y = self.point2index()
-        if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
-            pos_x, pos_y = int(pos_x), int(pos_y)
+        if 0 <= pos_x and pos_x < 15 and 0 <= pos_y and pos_y < 15 and not self.__pieces[pos_x][pos_y][2]:
             pen.setDashPattern([UNIT * WIDTH / 8 / self.width, UNIT * WIDTH / 4 / self.width])
             painter.setPen(pen)
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1])
@@ -106,16 +122,15 @@ class GoBang(QWidget):
             painter.drawLine(self.__grid[pos_x + 1][pos_y][0], self.__grid[pos_x + 1][pos_y][1], self.__grid[pos_x + 1][pos_y + 1][0], self.__grid[pos_x + 1][pos_y + 1][1])
             painter.drawLine(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], self.__grid[pos_x][pos_y + 1][0], self.__grid[pos_x][pos_y + 1][1])
 
-    def drawpieces(self, event, painter,status=0):
-
-        painter.setBrush(Qt.black)
-        self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
-        pos_x, pos_y = self.click2index()
-        if 0 < pos_x and pos_x < 15 and 0 < pos_y and pos_y < 15:
-            pos_x, pos_y = int(pos_x), int(pos_y)
-            self.pieces.append((pos_x,pos_y))
-            for pos_x,pos_y in self.pieces:
-                painter.drawChord(self.__grid[pos_x][pos_y][0],self.__grid[pos_x][pos_y][1],UNIT*WIDTH/self.width,UNIT*HEIGHT/self.height,0,360*16)
+    def drawpieces(self, painter):
+        self.__grid = [[((164 + r * UNIT) / WIDTH * self.width, (114 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
+        for item in self.__pieces:
+            for pos_x, pos_y, status in item:
+                if status:
+                    color = Qt.black if status == BLACK else Qt.white
+                    painter.setPen(QPen(color))
+                    painter.setBrush(color)
+                    painter.drawChord(self.__grid[pos_x][pos_y][0], self.__grid[pos_x][pos_y][1], (UNIT - 6) * WIDTH / self.width, (UNIT - 6) * HEIGHT / self.height, 0, 360 * 16)
 
 
 if __name__ == '__main__':
