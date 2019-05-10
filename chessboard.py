@@ -26,3 +26,6 @@ class ChessBoard(object):
             if count >= 5:
                 return True
         return False
+
+    def resetboard(self):
+        return  [[EMPTY for _ in range(GEOMETRY[0])] for _ in range(GEOMETRY[1])]

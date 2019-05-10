@@ -7,7 +7,7 @@ UNIT = 39
 
 from chessboard import *
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget,QMessageBox
 from PyQt5.QtGui import QIcon, QPalette, QBrush, QPixmap, QPainter, QColor, QPen, QPolygon
 from PyQt5.QtCore import Qt, QPoint
 
@@ -108,7 +108,11 @@ class GoBang(QWidget):
             self.__pieces[pos_x][pos_y] = (self.changestatus(self.status))
             self.status = not self.status
             if self.board.wincondition(pos_x,pos_y,self.__pieces):
-                print(self.__pieces[pos_x][pos_y], '胜')
+                winner='黑棋' if self.__pieces[pos_x][pos_y]==BLACK else '白棋'
+                reply=QMessageBox.question(self,'信息框',winner+'胜',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+                if reply==QMessageBox.Yes:
+                    self.__pieces=self.board.resetboard()
+                    self.status=True
 
     def drawhoverframe(self, painter):
         self.__grid = [[((161 + r * UNIT) / WIDTH * self.width, (111 + c * UNIT) / HEIGHT * self.height) for r in range(16)] for c in range(16)]
