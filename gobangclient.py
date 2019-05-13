@@ -7,16 +7,23 @@ PORT=8888
 ADDR=(HOST,PORT)
 
 
-def process(s):
-    pro=Process(target=do_request,args=(s,))
-    pro.start()
-    do_handle()
-    pro.join()
 
+
+def tcp_client():
+    s = socket()
+    try:
+        s.connect(ADDR)
+        return s
+    except Exception as e:
+        print(e)
+        return
 
 def main():
-    s=tcp_server()
-    process(s)
+    s = tcp_client()
+    app = QApplication(sys.argv)
+    gb = GoBang()
+    gb.show()
+    sys.exit(app.exec_())
 
 
 if __name__=='__main__':
