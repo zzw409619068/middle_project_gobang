@@ -7,8 +7,6 @@ PORT=8888
 ADDR=(HOST,PORT)
 
 
-
-
 def tcp_client():
     s = socket()
     try:
@@ -23,6 +21,8 @@ def main():
     app = QApplication(sys.argv)
     gb = GoBang()
     gb.show()
+    data=s.recv(1024).decode()
+    print(data)
     sys.exit(app.exec_())
 
 
